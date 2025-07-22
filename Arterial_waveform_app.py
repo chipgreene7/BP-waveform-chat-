@@ -12,7 +12,7 @@ st.sidebar.header("🧠 Patient Parameters")
 sbp = st.sidebar.slider("Systolic BP (mmHg)", 20, 200, 120)
 dbp = st.sidebar.slider("Diastolic BP (mmHg)", 10, 120, 80)
 hr = st.sidebar.slider("Heart Rate (bpm)", 40, 140, 75)
-map_val = round((sbp + 2 * dbp) / 3, 1)
+map_val = int(round((sbp + 2 * dbp) / 3))
 st.sidebar.markdown(f"**MAP:** `{map_val}` mmHg")
 
 # --- Constants ---
