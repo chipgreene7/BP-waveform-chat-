@@ -61,6 +61,19 @@ if st.button("🟢 Start Monitor"):
         ax.set_xlim(t[0], t[-1])
         ax.set_ylim(40, 200)
         ax.grid(False)
+        # Annotate BP on the plot like a bedside monitor
+bp_text = f"{sbp}/{dbp} ({map_val})"
+ax.text(
+    0.98, 0.95, bp_text,
+    transform=ax.transAxes,
+    fontsize=24,
+    color='lime',
+    ha='right',
+    va='top',
+    fontweight='bold',
+    family='monospace',
+    bbox=dict(facecolor='black', edgecolor='lime', boxstyle='round,pad=0.3')
+)
 
         plot_placeholder.pyplot(fig)
         frame_count += 10
