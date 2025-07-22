@@ -45,8 +45,8 @@ def generate_physiologic_waveform(t, sbp, dbp, hr):
         )
 
         shape = np.clip(shape, 0, None)
-        if np.max(shape) > 0:
-            shape /= np.max(shape)
+        if shape.size > 0 and np.max(shape) > 0:
+    shape /= np.max(shape)
 
         pressure[in_beat] = dbp + amp * shape
 
