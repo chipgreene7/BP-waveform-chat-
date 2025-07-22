@@ -13,14 +13,14 @@ sbp = st.sidebar.slider("Systolic BP (mmHg)", 20, 200, 120)
 dbp = st.sidebar.slider("Diastolic BP (mmHg)", 10, 120, 80)
 hr = st.sidebar.slider("Heart Rate (bpm)", 40, 140, 75)
 map_val = int(round((sbp + 2 * dbp) / 3))
-st.sidebar.markdown(f"**MAP:** `{map_val}` mmHg")
+st.sidebar.markdown(f"**MAP:** {map_val} mmHg")
 
 # --- Constants ---
-fs = 100  # Hz
-window_sec = 5
+fs = 100  # sample rate in Hz
+window_sec = 5  # scrolling window in seconds
 samples = window_sec * fs
 
-# --- Arterial Waveform Generator ---
+# --- Waveform Generator ---
 def generate_physiologic_waveform(t, sbp, dbp, hr):
     pressure = np.zeros_like(t)
     period = 60 / hr
@@ -30,18 +30,22 @@ def generate_physiologic_waveform(t, sbp, dbp, hr):
         beat_t = t - beat_start
         in_beat = (beat_t >= 0) & (beat_t < period)
 
-        x = beat_t[in_beat] / period
+        x = beat_t[in_beat] / period  # normalized beat time
         shape = (
             0.3 * np.exp(-30 * (x - 0.05)**2) +      # systolic upstroke
             0.15 * np.exp(-300 * (x - 0.35)**2) -    # dicrotic notch
-            0.05 * np.sin(8 * np.pi * x) * (x < 0.7) # small wiggle
+            0.05 * np.sin(8 * np.pi * x) * (x < 0.7) # wiggle
         )
-        shape = np.clip(shape, 0, 1)
+
+        # Normalize to peak = 1.0
+        if np.max(shape) > 0:
+            shape /= np.max(shape)
+
         pressure[in_beat] = dbp + amp * shape
 
     return pressure
 
-# --- Live Plot ---
+# --- Live Plotting ---
 plot_placeholder = st.empty()
 
 if st.button("🟢 Start Monitor"):
@@ -62,7 +66,7 @@ if st.button("🟢 Start Monitor"):
         ax.set_ylim(40, 200)
         ax.grid(False)
 
-        # ICU-style annotation (SBP/DBP (MAP))
+        # Annotate BP on screen (SBP/DBP (MAP))
         bp_text = f"{sbp}/{dbp} ({map_val})"
         ax.text(
             0.98, 0.95, bp_text,
