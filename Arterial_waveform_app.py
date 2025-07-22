@@ -9,8 +9,8 @@ st.title("🩺 ICU Arterial Line Waveform Monitor")
 
 # --- Sidebar Inputs ---
 st.sidebar.header("🧠 Patient Parameters")
-sbp = st.sidebar.slider("Systolic BP (mmHg)", 80, 200, 120)
-dbp = st.sidebar.slider("Diastolic BP (mmHg)", 40, 120, 80)
+sbp = st.sidebar.slider("Systolic BP (mmHg)", 40, 200, 120)
+dbp = st.sidebar.slider("Diastolic BP (mmHg)", 20, 120, 80)
 hr = st.sidebar.slider("Heart Rate (bpm)", 40, 140, 75)
 map_val = round((sbp + 2 * dbp) / 3, 1)
 st.sidebar.markdown(f"**MAP:** `{map_val}` mmHg")
@@ -52,7 +52,7 @@ if st.button("🟢 Start Monitor"):
         waveform = generate_physiologic_waveform(t, sbp, dbp, hr)
 
         fig, ax = plt.subplots(facecolor='black')
-        ax.plot(t, waveform, color='lime', linewidth=2)
+        ax.plot(t, waveform, color='red', linewidth=2)
         ax.set_facecolor("black")
         ax.set_xlabel("Time (s)", color='white')
         ax.set_ylabel("Pressure (mmHg)", color='white')
