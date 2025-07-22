@@ -17,52 +17,51 @@ st.sidebar.markdown(f"**MAP:** `{map_val}` mmHg")
 
 # --- Constants ---
 fs = 100  # 100 Hz sample rate
-window_sec = 5  # 5-second scrolling window
+window_sec = 5  # display 5-second scrolling window
 samples = window_sec * fs
-t = np.linspace(0, window_sec, samples)
 
-# --- Physiologic Arterial Waveform Function ---
-def generate_waveform(t, sbp, dbp, hr):
+# --- Arterial Waveform Generator ---
+def generate_physiologic_waveform(t, sbp, dbp, hr):
     pressure = np.zeros_like(t)
     period = 60 / hr
+    amp = sbp - dbp
 
     for beat_start in np.arange(0, t[-1], period):
         beat_t = t - beat_start
         in_beat = (beat_t >= 0) & (beat_t < period)
-        # Arterial waveform shape: fast rise, dicrotic notch, slow fall
+
+        x = beat_t[in_beat] / period  # normalized time in beat
         shape = (
-            sbp
-            - (sbp - dbp) * np.exp(-6 * beat_t[in_beat]) * (1 - np.cos(2 * np.pi * beat_t[in_beat] / period))
+            0.3 * np.exp(-30 * (x - 0.05)**2) +      # systolic upstroke
+            0.15 * np.exp(-300 * (x - 0.35)**2) -    # dicrotic notch
+            0.05 * np.sin(8 * np.pi * x) * (x < 0.7) # slight noise
         )
-        # Dicrotic notch at ~35% of systole
-        if len(shape) > 0:
-            notch_idx = int(0.35 * len(shape))
-            if 0 <= notch_idx < len(shape):
-                shape[notch_idx] -= 4  # Dip for dicrotic notch
-        pressure[in_beat] = shape
+        shape = np.clip(shape, 0, 1)
+        pressure[in_beat] = dbp + amp * shape
+
     return pressure
 
 # --- Live Plotting ---
 plot_placeholder = st.empty()
 
 if st.button("🟢 Start Monitor"):
-    st.toast("Starting real-time arterial waveform...", icon="🫀")
+    st.toast("Starting real-time waveform...", icon="🫀")
     frame_count = 0
     while True:
-        # Update X and Y
         t = np.linspace(frame_count / fs, frame_count / fs + window_sec, samples)
-        waveform = generate_waveform(t, sbp, dbp, hr)
+        waveform = generate_physiologic_waveform(t, sbp, dbp, hr)
 
-        # Plotting
-        fig, ax = plt.subplots()
-        ax.plot(t, waveform, color='crimson', linewidth=2)
-        ax.set_ylim(40, 200)
+        fig, ax = plt.subplots(facecolor='black')
+        ax.plot(t, waveform, color='lime', linewidth=2)
+        ax.set_facecolor("black")
+        ax.set_xlabel("Time (s)", color='white')
+        ax.set_ylabel("Pressure (mmHg)", color='white')
+        ax.tick_params(colors='white')
+        ax.set_title("Arterial Line", color='white')
         ax.set_xlim(t[0], t[-1])
-        ax.set_xlabel("Time (s)")
-        ax.set_ylabel("Pressure (mmHg)")
-        ax.set_title("Real-Time Arterial Blood Pressure")
-        ax.grid(True)
-        plot_placeholder.pyplot(fig)
+        ax.set_ylim(40, 200)
+        ax.grid(False)
 
-        frame_count += 10  # scroll forward
+        plot_placeholder.pyplot(fig)
+        frame_count += 10
         time.sleep(0.1)
